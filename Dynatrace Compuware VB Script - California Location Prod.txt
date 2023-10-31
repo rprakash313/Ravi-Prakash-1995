@@ -1,0 +1,1423 @@
+'Script Name:
+Option Explicit                 ' Requires that variables are declared ahead of time (helps with debugging).
+
+Dim ScriptType As ScriptTypes   ' Simplifies the determination of what type of script this is.
+
+Public URL As String, _
+    OracleVer As String, _
+    ResponsibilityValidation As String, _
+    OracleForm As String, _
+    OrderNum As String, _
+    OrderStatus As String, _
+    OrderFindValidation As String, _
+    OpenOrderValidation As String, _
+    NewReqShipDate As String, _
+    InstanceName As String, _
+    PassReview As String, _
+    CheckPoint As String, _
+    NamedPlace As String, _
+    FreightTerms As String, _
+    ShippingTerms As String, _
+    sRobotName  As String, _
+    New_Java_Version_Ret As Boolean, _
+    HoldType As String
+
+Public NewOrderNum As String, _
+       OrderText As String, _
+       ReqDeliveryDate As String, _
+       ReqShipDate As String, _
+       PODate As String, _
+       ROReceived As String, _
+       POName As String, _
+       NewShipAddress_Brzl As String, _
+       BaseModel As String
+
+Public UserName_Arg As String, _
+UserName_Hun As String, _
+UserName_Mex As String, _
+UserName_Mal As String, _
+UserName_Aus As String, _
+Agent_Hun As String, _
+Agent_Mex As String, _
+Agent_Mal As String, _
+Agent_Mnl As String, _
+Agent_Arg As String, _
+Agent_Aus As String, _
+Agent_Sing As String, _
+Agent_Dev As String, _
+Agent_Dev2 As String, _
+Agent_Bou3 As String, _
+Agent_Brzl As String, _
+Agent_Austin As String, _
+Agent_StLouis As String, _
+Responsibility_Hun As String, _
+Responsibility_Mex As String, _
+Responsibility_Mal As String, _
+Responsibility_Arg As String, _
+Responsibility_Dev As String, _
+Responsibility_Brzl As String, _
+Responsibility_Aus As String
+ 
+ 
+Public OrderNum_Arg As String, _
+OrderNum_Hun As String, _
+OrderNum_Mex As String, _
+OrderNum_Mal As String, _
+OrderNum_Aus As String, _
+OrderNum_Dev As String, _
+OrderNum_Brzl As String, _
+Agent_Boulder3 As String, _
+Agent_Chan2 As String, _
+NewShipAddress_Arg As String, _
+NewShipAddress_Hun As String, _
+NewShipAddress_Mex As String, _
+NewShipAddress_Mal As String, _
+NewShipAddress_Aus As String, _
+OrderFindValidation_Arg As String, _
+OrderFindValidation_Hun As String, _
+OrderFindValidation_Mex As String, _
+OrderFindValidation_Mal As String, _
+OrderFindValidation_Aus As String
+
+
+Public OrderItem1 As String, _
+    ModelString1 As String, _
+    OrderItem2 As String, _
+    ModelString2 As String, _
+    OrderItem3 As String, _
+    ModelString3 As String, _
+    OrderItem4 As String, _
+    ModelString4 As String, _
+    OrderItem5 As String, _
+    ModelString5 As String, _
+    OrderItem6 As String, _
+    ModelString6 As String, _
+    OrderItem7 As String, _
+    ModelString7 As String, _
+    OrderItem8 As String, _
+    ModelString8 As String, _
+    OrderItem9 As String, _
+    ModelString9 As String, _
+    Node1 As String, _
+    Node2 As String, _
+    Node3 As String, _
+    RndNum As String, _
+    RndTxt As String
+
+       
+         
+Sub JDI_Master(InstanceName As String)
+    
+    'On Error GoTo ErrorHandler
+    
+    ' *** Always start with ScriptType = Development_Mode. Change to Production_App_Driver when ready to deploy.
+    ' *** To change the type, delete the existing value then press Ctrl+Space to choose the desired option.
+    'ScriptType = Development_Mode
+    
+    'Call InitializeScript(ScriptType, Me.Name)  ' **** Do not change this line except to add an optional app acronym ****
+    Call Oracle_Close
+    Call OracleWeb_Close
+     
+     'InstanceName = "OE_RMT_Small"
+
+ AddToKillList "Java.exe"        ' Make sure this is terminated at the end of every script.
+   AddToKillList "iexplore.exe"    ' While normally discouraged, occasionally this hangs when closing normally
+   AddToKillList "jp2launcher.exe"
+   AddToKillList "WerFault.exe"
+    ' Since this is a Java app, make sure to set the Java settings
+   Call DisableJavaCups
+   ' ------------------------- DO NOT ADD ANYTHING ABOVE THIS LINE -------------------------
+    ' Verify that Oracle is not running already
+    
+   InitializeApps
+  
+        ' ---------------  Variables  ------------------
+    ' Reading the variables in from the ini file
+    
+    URL = ReadIni(AppIniFile, InstanceName, "url")
+    OracleVer = ReadIni(AppIniFile, InstanceName, "OracleVer", 11)
+   ' Responsibility = ReadIni(AppIniFile, InstanceName, "Responsibility")
+    ResponsibilityValidation = ReadIni(AppIniFile, InstanceName, "ResponsibilityValidation", "Orders, Returns")
+    OracleForm = ReadIni(AppIniFile, InstanceName, "OracleForm")
+    OrderNum = ReadIni(AppIniFile, InstanceName, "OrderNum")
+    OrderStatus = ReadIni(AppIniFile, InstanceName, "OrderStatus")
+    ReqDeliveryDate = Format(DateAdd("d", 94, Date), "dd-mmm-yyyy")
+    ReqShipDate = Format(DateAdd("d", 94, Date), "dd-mmm-yyyy") & " 00:00:00"
+    PODate = Format(DateAdd("d", -2, Date), "dd-mmm-yyyy")
+    ROReceived = Format(DateAdd("d", -2, Date), "dd-mmm-yyyy")
+    Agent_Arg = ReadIni(AppIniFile, InstanceName, "Agent_Arg")
+    Agent_Hun = ReadIni(AppIniFile, InstanceName, "Agent_Hun")
+    Agent_Mex = ReadIni(AppIniFile, InstanceName, "Agent_Mex")
+    Agent_Mal = ReadIni(AppIniFile, InstanceName, "Agent_Mal")
+    Agent_Mnl = ReadIni(AppIniFile, InstanceName, "Agent_Mnl")
+    Agent_Aus = ReadIni(AppIniFile, InstanceName, "Agent_Aus")
+    Agent_Brzl = ReadIni(AppIniFile, InstanceName, "Agent_Brzl")
+    Agent_Sing = ReadIni(AppIniFile, InstanceName, "Agent_Sing")
+    Agent_Austin = ReadIni(AppIniFile, InstanceName, "Agent_Austin")
+    Agent_Dev = ReadIni(AppIniFile, InstanceName, "Agent_Dev")
+    Agent_Dev2 = ReadIni(AppIniFile, InstanceName, "Agent_Dev2")
+    Agent_Bou3 = ReadIni(AppIniFile, InstanceName, "Agent_Bou3")
+    Agent_Boulder3 = ReadIni(AppIniFile, InstanceName, "Agent_Boulder3")
+    Agent_StLouis = ReadIni(AppIniFile, InstanceName, "Agent_StLouis")
+    Agent_Chan2 = ReadIni(AppIniFile, InstanceName, "Agent_Chan2")
+    UserName_Arg = ReadIni(AppIniFile, InstanceName, "UserName_Arg")
+    UserName_Hun = ReadIni(AppIniFile, InstanceName, "UserName_Hun")
+    UserName_Mex = ReadIni(AppIniFile, InstanceName, "UserName_Mex")
+    UserName_Mal = ReadIni(AppIniFile, InstanceName, "UserName_Mal")
+    Responsibility_Arg = ReadIni(AppIniFile, InstanceName, "Responsibility_Arg")
+    Responsibility_Hun = ReadIni(AppIniFile, InstanceName, "Responsibility_Hun")
+    Responsibility_Mex = ReadIni(AppIniFile, InstanceName, "Responsibility_Mex")
+    Responsibility_Mal = ReadIni(AppIniFile, InstanceName, "Responsibility_Mal")
+    Responsibility_Aus = ReadIni(AppIniFile, InstanceName, "Responsibility_Aus")
+    Responsibility_Brzl = ReadIni(AppIniFile, InstanceName, "Responsibility_Brzl")
+    Responsibility_Dev = ReadIni(AppIniFile, InstanceName, "Responsibility_Dev")
+    OrderNum_Arg = ReadIni(AppIniFile, InstanceName, "OrderNum_Arg")
+    OrderNum_Hun = ReadIni(AppIniFile, InstanceName, "OrderNum_Hun")
+    OrderNum_Mex = ReadIni(AppIniFile, InstanceName, "OrderNum_Mex")
+    OrderNum_Mal = ReadIni(AppIniFile, InstanceName, "OrderNum_Mal")
+    OrderNum_Aus = ReadIni(AppIniFile, InstanceName, "OrderNum_Aus")
+    OrderNum_Brzl = ReadIni(AppIniFile, InstanceName, "OrderNum_Brzl")
+    OrderFindValidation_Arg = ReadIni(AppIniFile, InstanceName, "OrderFindValidation_Arg")
+    OrderFindValidation_Hun = ReadIni(AppIniFile, InstanceName, "OrderFindValidation_Hun")
+    OrderFindValidation_Mex = ReadIni(AppIniFile, InstanceName, "OrderFindValidation_Mex")
+    OrderFindValidation_Mal = ReadIni(AppIniFile, InstanceName, "OrderFindValidation_Mal")
+    OrderFindValidation_Aus = ReadIni(AppIniFile, InstanceName, "OrderFindValidation_Aus")
+    NewShipAddress_Brzl = ReadIni(AppIniFile, InstanceName, "NewShipAddress_Brzl")
+    NewShipAddress_Arg = ReadIni(AppIniFile, InstanceName, "NewShipAddress_Arg")
+    NewShipAddress_Hun = ReadIni(AppIniFile, InstanceName, "NewShipAddress_Hun")
+    NewShipAddress_Mex = ReadIni(AppIniFile, InstanceName, "NewShipAddress_Mex")
+    NewShipAddress_Mal = ReadIni(AppIniFile, InstanceName, "NewShipAddress_Mal")
+    NewShipAddress_Aus = ReadIni(AppIniFile, InstanceName, "NewShipAddress_Aus")
+    PassReview = ReadIni(AppIniFile, InstanceName, "PassReview")
+    CheckPoint = ReadIni(AppIniFile, InstanceName, "CheckPoint")
+    NamedPlace = ReadIni(AppIniFile, InstanceName, "NamedPlace")
+    FreightTerms = ReadIni(AppIniFile, InstanceName, "FreightTerms")
+    ShippingTerms = ReadIni(AppIniFile, InstanceName, "ShippingTerms")
+    OrderItem1 = ReadIni(AppIniFile, InstanceName, "OrderItem1")
+    ModelString1 = ReadIni(AppIniFile, InstanceName, "ModelString1")
+    OrderItem2 = ReadIni(AppIniFile, InstanceName, "OrderItem2")
+    ModelString2 = ReadIni(AppIniFile, InstanceName, "ModelString2")
+    OrderItem3 = ReadIni(AppIniFile, InstanceName, "OrderItem3")
+    ModelString3 = ReadIni(AppIniFile, InstanceName, "ModelString3")
+    OrderItem4 = ReadIni(AppIniFile, InstanceName, "OrderItem4")
+    ModelString4 = ReadIni(AppIniFile, InstanceName, "ModelString4")
+    OrderItem5 = ReadIni(AppIniFile, InstanceName, "OrderItem5")
+    ModelString5 = ReadIni(AppIniFile, InstanceName, "ModelString5")
+    OrderItem6 = ReadIni(AppIniFile, InstanceName, "OrderItem6")
+    ModelString6 = ReadIni(AppIniFile, InstanceName, "ModelString6")
+    OrderItem7 = ReadIni(AppIniFile, InstanceName, "OrderItem7")
+    ModelString7 = ReadIni(AppIniFile, InstanceName, "ModelString7")
+    OrderItem8 = ReadIni(AppIniFile, InstanceName, "OrderItem8")
+    ModelString8 = ReadIni(AppIniFile, InstanceName, "ModelString8")
+    OrderItem9 = ReadIni(AppIniFile, InstanceName, "OrderItem9")
+    ModelString9 = ReadIni(AppIniFile, InstanceName, "ModelString9")
+    Node1 = ReadIni(AppIniFile, InstanceName, "Node1")
+    Node2 = ReadIni(AppIniFile, InstanceName, "Node2")
+    Node3 = ReadIni(AppIniFile, InstanceName, "Node3")
+    RndNum = Utility.Random(10, 100)
+    RndTxt = Utility.RandomText(5)
+
+
+'GoTo restart
+
+   sRobotName = AgentName()
+    'MsgBox (sRobotName)
+   ' MsgBox (UserName_Mal)
+
+
+    LaunchIE    ' This launches IE to an empty page. Delete this line if the app is not an IE application.
+    
+    ShowStatusBox "Navigating to " + URL + "...", False
+    ' -------------- Launch --------------
+  '  StartTrace InstanceName & "_Launch_URL"                                     ' START vvvvvvvvvvvvv
+    GoToPage URL
+    
+ '  IEWaitForText "Password", True
+    
+  'Enter Username & Password
+    ShowStatusBox "Enter User Name and Password", False
+    
+    HTMLBrowser("Internet Explorer ChildWindow").Attach
+    WaitForText "Internet Explorer MainWindow", "Password", True ' ,True
+    
+  ' --------------------------------------------------------------------
+  '
+  '  Login  [It reads username and password from maintenance file
+  '
+  ' --------------------------------------------------------------------
+    
+   ' Call Login
+    Sleep 500, tpPauseMilliSeconds
+    ShowStatusBox "Enter User Name and Password", False
+    
+    WaitTime = 400
+       
+   ' IEWindow("Internet Explorer MainWindow").Attach
+     HTMLBrowser("Internet Explorer ChildWindow").Attach
+         
+         WriteLogSteps 2, "Before to click User Name"
+      HTMLEditBox("Name=usernameField").Click
+      WriteLogSteps 2, "After to click User Name"
+     HTMLEditBox("Name=usernameField").SetText GetID(InstanceName)
+        Sleep 500, tpPauseMilliSeconds
+        
+        'HTMLEditBox("Name=passwordField").SetPasswordText GetPassword(InstanceName)
+        'Since this wasn't capturing all the text with SetPasswordText
+        HTMLEditBox("Name=passwordField").Click
+        SlowType GetPassword(InstanceName), 20, 20
+   
+        ShowStatusBox "Clicking the 'Login' button", True
+        IEWindow("Internet Explorer MainWindow").Attach
+    HTMLBrowser("Internet Explorer ChildWindow").Attach
+    HTMLButton("Caption=Login").Click
+    
+        
+    'WaitForText "Internet Explorer MainWindow", "Oracle Applications Home"
+    WaitForText "Internet Explorer MainWindow", "Navigator"
+    
+  ' -----------------------------------------------------------------------------
+  '
+  '  Pick Responsibility  [It reads username and password from maintenance file
+  '
+  ' ----------------------------------------------------------------------------
+         
+
+    IEWindow("Internet Explorer MainWindow").Attach
+    HTMLBrowser("Internet Explorer ChildWindow").Attach
+    HTMLAnchor("Caption='    EMR ONT Order Administrator SUB MY'").Click
+    HTMLAnchor("Caption='    EMR Global Sales Order Entry Form'").Click
+    ''Call Responsibility
+
+    WaitTime = 400
+    WaitForText "Oracle_11_Main_JavaWindow", "First Pass Review"
+    
+    'If sRobotName = Agent_Brzl Or sRobotName = Agent_Mex Then
+    IEWindow("Internet Explorer MainWindow").Attach
+   IEWindow.Minimize
+   '  End If
+  
+   JavaWindow("JavaFormWindow").SetFocus
+   WaitForWindow "JavaFormWindow"
+   JavaWindow("JavaFormWindow").Attach
+    WaitForText "Oracle_11_Main_JavaWindow", "Admin"
+    JavaWindow("Oracle_11_Main_JavaWindow").Attach
+    ' Query Order
+    ShowStatusBox "Execute query", True
+    
+    JavaWindow.Type "{F11}"
+    
+  ' -----------------------------------------------------------------------------
+  '
+  '  Enter Order Number
+  '
+  ' ----------------------------------------------------------------------------
+               
+    Call EnterOrderNum
+              
+      ShowStatusBox "Execute query", True
+        ' Execute the query to find the Order
+          
+      '  StartTrace InstanceName & "_Query_Order"                              ' START vvvvvvvvvvv
+        
+          JavaWindow("Oracle_11_Main_JavaWindow", tpAttachNoWait).Attach
+          JavaWindow.Type "{Ctrl {F11}}"
+         WaitForText "Oracle_11_Main_JavaWindow", OrderFindValidation
+         
+       ' StopTimerAndTrace InstanceName & "_Query_Order"                       ' END ^^^^^^^^^^^^^^^
+   
+         
+    JavaWindow("Oracle_11_Main_JavaWindow").Attach
+    JavaWindow.Type "{Alt A}"
+     JavaWindow("Caption=Actions", tpAttachChild).Attach
+    JavaListBox("Index=1").Select "Copy", tpMouseDoubleClick
+    JavaWindow("Caption=Copy", tpAttachChild).Attach
+    
+  ' Clicking the OK button to copy the Order
+        WaitTime = 500
+        ShowStatusBox "Clicking on the 'OK' button", True
+        
+    StartTrace InstanceName & "_Order_Copy"                              ' START vvvvvvvvvvvvv
+        
+        JavaWindow("Oracle_11_Main_JavaWindow", tpAttachNoWait).Attach
+        JavaWindow.Type "{Alt O}"
+        WaitForText "Oracle_11_Main_JavaWindow", "Processed"
+        
+    StopTimerAndTrace InstanceName & "_Order_Copy"                       ' END ^^^^^^^^^^^^^^^
+'
+        ShowStatusBox "Capturing the new Order Number from the Order Column", True
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        
+
+            OrderText = JavaEditBox("NAME=UI_MESSAGE_MESSAGE_0").Text
+            NewOrderNum = Right(OrderText, 8)
+         
+            'MsgBox (NewOrderNum)
+
+ ' -----------------------------------------------------------------------------
+  '
+  '  Work on New Copied Order
+  '
+  ' ----------------------------------------------------------------------------
+
+          WaitTime = 400
+        ' Continue on with the order for creating multiple lines
+          JavaWindow("Oracle_11_Main_JavaWindow", tpAttachNoWait).Attach
+            JavaWindow.Type "{Alt O}"
+
+     
+          ' Query mode for Order Screen
+          JavaWindow("Oracle_11_Main_JavaWindow", tpAttachNoWait).Attach
+            JavaWindow.Type "{F11}"
+
+         
+         ' enter the new Order Number into the SO# field
+        ClipBoard = NewOrderNum
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+            
+        JavaEditBox("Name=Order_ORDER_NUMBER_0").Click
+        
+        JavaWindow.Type KeyPaste
+Sleep 1
+        ' Execute the query to find the Order
+          JavaWindow("Oracle_11_Main_JavaWindow", tpAttachNoWait).Attach
+            
+            JavaWindow.Type "{Ctrl {F11}}"
+
+        WaitForText "Oracle_11_Main_JavaWindow", OrderFindValidation
+        
+        WaitForNoHourGlass
+        
+         'Enter the Req Delivery and Req Ship Dates on the Order
+        '
+    
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+      
+        JavaEditBox("Name=ORDER_CUST_PO_NUMBER_0").SetText "Compuware" + NewOrderNum      '"Australia 261233434"
+        JavaEditBox("Name=ORDER_PO_ORIGINATED_0").SetText PODate '"10-JUL-2014"
+        JavaEditBox("Name=ORDER_PORECEIPTDATE_0").SetText ROReceived '"10-JUL-2014"
+        JavaEditBox("Name=ORDER_REQUESTED_DELIVERY_DATE_0").SetText ReqDeliveryDate '"30-JUL-2014"
+        JavaEditBox("Name=ORDER_REQUEST_DATE_0").SetText ReqShipDate '"30-JUL-2014 00:00"
+        JavaEditBox("Name=ORDER_FIRST_PASS_REVIEW_0").SetText PassReview
+        JavaTabControl("Name=ORDER_TAB").Select "Financials"
+        JavaEditBox("Name=ORDER_CHECKPOINT_INTERMEDIARY_0").SetText CheckPoint
+        JavaTabControl("Name=ORDER_TAB").Select "Shipping"
+        JavaEditBox("Name=ORDER_NAMED_PLACE_0").SetText NamedPlace
+           
+  ' -----------------------------------
+  '
+  '  Configuring First Line A4700
+  '
+  ' -----------------------------------
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        JavaTabControl("Name=ORDER_REGIONS").Select "Line Items"
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+       
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_0").Click
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_0").SetText OrderItem1 ' OrderItem1  'SetText "CMF100M"
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_0").Click
+         WaitForNoHourGlass
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_0").SetText "1"
+        JavaEditBox("Name=LINE_LINE_TYPE_0").SetText "LINE_Std_Inv_SUB" ' "LINE S101_Venda_BR"
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_0").Click
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        
+          
+        StartTrace InstanceName & "_Add_A4700"                              ' START vvvvvvvvvvvvv
+      
+            Call Configure_A4700
+    
+        StopTimerAndTrace InstanceName & "_Add_A4700"                       ' END ^^^^^^^^^^^^^^^
+           
+  ' -----------------------------------
+  '
+  '  Configuring Second Line A2140
+  '
+  ' -----------------------------------
+           JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_1").Click
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_1").SetText OrderItem2  'SetText "A2140"
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_1").Click
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_1").SetText "1"
+        JavaScrollBar("Index=1").SetPosition 296
+        JavaEditBox("Name=LINE_LINE_TYPE_1").SetText "LINE_Std_Inv_SUB"
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_1").Click
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        
+           
+        StartTrace InstanceName & "_Add_A2140"                              ' START vvvvvvvvvvvvv
+      
+            Call Configure_A2140(InstanceName)
+    
+        StopTimerAndTrace InstanceName & "_Add_A2140"                       ' END ^^^^^^^^^^^^^^^
+        
+        
+  ' -----------------------------------
+  '
+  '  Configuring Third Line DPSX
+  '
+  ' -----------------------------------
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_2").Click
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_2").SetText OrderItem3  'SetText "107"
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_2").Click
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_2").SetText "1"
+        JavaScrollBar("Index=1").SetPosition 296
+        JavaEditBox("Name=LINE_LINE_TYPE_2").SetText "LINE_Std_Inv_SUB"
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_2").Click
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        
+   
+        StartTrace InstanceName & "_Add_DPSX"                              ' START vvvvvvvvvvvvv
+      
+            Call Configure_DPSX
+    
+        StopTimerAndTrace InstanceName & "_Add_DPSX"                       ' END ^^^^^^^^^^^^^^^
+        
+  ' -----------------------------------
+  '
+  '  Configuring Fourth  Line DPPLATE
+  '
+  ' -----------------------------------
+  JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_3").Click
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_3").SetText OrderItem4  'SetText "DPPLATE"
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_3").Click
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_3").SetText "1"
+        JavaScrollBar("Index=1").SetPosition 296
+        JavaEditBox("Name=LINE_LINE_TYPE_3").SetText "LINE_Std_Inv_SUB"
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_3").Click
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        
+        StartTrace InstanceName & "_Add_DPPLATE"                              ' START vvvvvvvvvvvvv
+      
+            Call Configure_DPPLATE
+    
+        StopTimerAndTrace InstanceName & "_Add_DPPLATE"                       ' END ^^^^^^^^^^^^^^^
+        
+   ' -----------------------------------
+  '
+  '  Configuring Fifth  Line 107
+  '
+  ' -----------------------------------
+  JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_4").Click
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_4").SetText OrderItem5  'SetText "107"
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_4").Click
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_4").SetText "1"
+        JavaScrollBar("Index=1").SetPosition 296
+        JavaEditBox("Name=LINE_LINE_TYPE_4").SetText "LINE_Std_Inv_SUB"
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_4").Click
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        
+        StartTrace InstanceName & "_Add_107"                              ' START vvvvvvvvvvvvv
+      
+          Call Configure_107
+    
+        StopTimerAndTrace InstanceName & "_Add_107"                       ' END ^^^^^^^^^^^^^^^
+      
+       
+  ' -----------------------------------
+  '
+  '  Configuring Sixth  Line CMF100M
+  '
+  ' -----------------------------------
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_5").Click
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_5").SetText OrderItem6  'SetText "CMF100M"
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_5").Click
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_5").SetText "1"
+        JavaScrollBar("Index=1").SetPosition 296
+        JavaEditBox("Name=LINE_LINE_TYPE_5").SetText "LINE_Std_Inv_SUB"
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_5").Click
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        
+        StartTrace InstanceName & "_Add_CMF100M"                              ' START vvvvvvvvvvvvv
+      
+            Call Configure_CMF100M
+    
+        StopTimerAndTrace InstanceName & "_Add_CMF100M"                       ' END ^^^^^^^^^^^^^^^
+ 
+  ' -----------------------------------
+  '
+  '  Configuring Seventh  Line CWM
+  '
+  ' -----------------------------------
+         JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_6").Click
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_6").SetText OrderItem7  'SetText "CWM"
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_6").Click
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_6").SetText "1"
+        JavaScrollBar("Index=1").SetPosition 296
+        JavaEditBox("Name=LINE_LINE_TYPE_6").SetText "LINE_Std_Inv_SUB"
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_6").Click
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+    
+           
+        StartTrace InstanceName & "_Add_CWM"                              ' START vvvvvvvvvvvvv
+      
+            Call Configure_CWM
+    
+        StopTimerAndTrace InstanceName & "_Add_CWM"                       ' END ^^^^^^^^^^^^^^^
+    
+
+ ' -----------------------------------
+  '
+  '  Configuring Eifht Line CBB Master
+  '
+  ' -----------------------------------
+    JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_7").Click
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_7").SetText OrderItem8  'SetText "CBB Master"
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_7").Click
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_7").SetText "1"
+        WaitForNoHourGlass
+        JavaEditBox("Name=LINE_ORDER_QUANTITY_UOM_7").Click
+        JavaEditBox("Name=LINE_ORDER_QUANTITY_UOM_7").SetText "EA"
+        WaitForNoHourGlass
+        JavaTabControl("Index=1").Select "Shipping"
+        WaitForNoHourGlass
+        JavaEditBox("Name=LINE_SHIP_FROM_MIR_7").Click
+        JavaEditBox("Name=LINE_SHIP_FROM_MIR_7").Clear
+        WaitForNoHourGlass
+        JavaMenu("Caption=File").Select "File~Save"
+        WaitForNoHourGlass
+        JavaTabControl("Index=1").Select "Main"
+        WaitForNoHourGlass
+        ''JavaScrollBar("Index=1").SetPosition 296
+        ''JavaEditBox("Name=LINE_LINE_TYPE_7").SetText "LINE_Std_Inv_SUB"
+        ''JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_7").Click
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+               
+        StartTrace InstanceName & "_Add_CBBMaster"                              ' START vvvvvvvvvvvvv
+      
+            Call Configure_CBBMaster
+    
+        StopTimerAndTrace InstanceName & "_Add_CBBMaster"                       ' END ^^^^^^^^^^^^^^^
+        
+  ' -----------------------------------
+  '
+  '  Configuring Ninth Line G Master
+  '
+  ' -----------------------------------
+      JavaWindow("Oracle_11_Main_JavaWindow").Attach
+      JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_8").Click
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_8").SetText OrderItem9  'SetText "GMaster"
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_8").Click
+        JavaEditBox("Name=LINE_ORDERED_QUANTITY_8").SetText "1"
+        WaitForNoHourGlass
+        JavaEditBox("Name=LINE_ORDER_QUANTITY_UOM_8").Click
+        JavaEditBox("Name=LINE_ORDER_QUANTITY_UOM_8").SetText "EA"
+        WaitForNoHourGlass
+        JavaTabControl("Index=1").Select "Shipping"
+        WaitForNoHourGlass
+        JavaEditBox("Name=LINE_SHIP_FROM_MIR_8").Click
+        JavaEditBox("Name=LINE_SHIP_FROM_MIR_8").Clear
+        WaitForNoHourGlass
+        JavaMenu("Caption=File").Select "File~Save"
+        WaitForNoHourGlass
+        JavaTabControl("Index=1").Select "Main"
+        WaitForNoHourGlass
+        ''JavaScrollBar("Index=1").SetPosition 296
+        ''JavaEditBox("Name=LINE_LINE_TYPE_8").SetText "LINE_Std_Inv_SUB"
+        JavaEditBox("Name=LINE_ORDERED_ITEM_DSP_8").Click
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+               
+        StartTrace InstanceName & "_Add_GMaster"                              ' START vvvvvvvvvvvvv
+      
+            Call Configure_GMaster
+    
+        StopTimerAndTrace InstanceName & "_Add_GMaster"                       ' END ^^^^^^^^^^^^^^^
+    
+ ' -----------------------------------
+  '
+  '  Change Shipping Address
+  '
+  ' -----------------------------------
+
+'restart:
+       WaitTime = 400
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        JavaTabControl("Name=ORDER_REGIONS").Select "Order Information"
+       
+        StartTrace InstanceName & "_Change_Ship_To_address"                       ' Start ^^^^^^^^^^^^^^^
+        
+        Call ChangeShipAddress
+    
+        StopTimerAndTrace InstanceName & "_Change_Ship_To_address"                       ' END ^^^^^^^^^^^^^^^
+         
+        
+  'Save
+   JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        JavaWindow("JavaFormWindow").Attach
+        JavaMenu("Caption=File").Select "File~Save"
+        WaitForNoHourGlass
+                
+         If IsObj("Caption='OK'", Does_Exist) = True Then
+         JavaWindow("Caption=Note", tpAttachChild).Attach
+         JavaButton("Caption=OK").Click
+      End If
+      
+        If IsWindow("Note'", "Exists") = True Then
+          JavaWindow("Caption=Note", tpAttachChild).Attach
+         WaitForText "Oracle_11_Main_JavaWindow", "If wish to Recalculate"
+         WaitForNoHourGlass
+            JavaButton("Caption=OK").DoubleClick
+            WaitForNoHourGlass
+            
+         End If
+               
+         
+     
+             
+'   ' -----------------------------------------------------------------
+'   '  Delete the Order
+'   ' ----------------------------------------------------------------
+     If InstanceName = "JDI_Master_Prod" Then
+     
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        JavaWindow.Type "{Alt E}"
+        JavaWindow.Type "D"
+    
+         WaitForNoHourGlass
+    
+    
+          JavaWindow("Oracle_11_Main_JavaWindow").Attach
+                JavaWindow.Type "{Alt F}"
+                JavaWindow.Type "S"
+    
+    
+         WaitForText "Oracle_11_Main_JavaWindow", "records applied and saved"
+         End If
+         
+                
+   '   ' -----------------------------------------------------------------
+'   '  Close the Oracle Forms  and Oracle Application
+'   ' ----------------------------------------------------------------
+'
+
+     Call Oracle_Close
+     Call OracleWeb_Close
+        
+     ' ------------------------- DO NOT ADD ANYTHING BELOW THIS LINE -------------------------
+    Call EndScript(ScriptType)      ' **** Do not change this line ****
+    
+    Exit Sub
+
+ErrorHandler:
+    'Do NOT put anything in this section. Put your custom error handling in UserCleanupDesktop instead. ****
+    HandleScriptErrors (ScriptType) ' **** Do not change this line. ****
+    
+End Sub
+
+Sub Oracle_Close()
+    Dim iTempWaitTime As Integer
+    On Error Resume Next        ' We don't want to trigger any errors here since we could be in a error condition already
+    
+    iTempWaitTime = WaitTime    ' Get the default Wait Time
+    WaitTime = 10               ' Now set the wait time to only 10 seconds instead of 30
+    
+    If IsWindow("Oracle_Developer_Forms_Runtime_WebWindow", "Exists") = True Then
+        WriteLogSteps 1, Space(3) & "It appears that this instance was hung. Trying to close the window..."
+        ' At this point, TP might hang, so it might not even execute...
+        Window("Oracle_Developer_Forms_Runtime_WebWindow", tpAttachNoWait).Attach
+            Window.Close
+        
+        WaitForAnyText True, "Close the program"
+        
+        Window(ActiveWindow, tpAttachNoWait).Attach
+            Window.TextSelect "Close the program"
+            
+        WaitForWindow "Oracle_Developer_Forms_Runtime_WebWindow", DoesNotExist
+        
+    End If
+    ' This is if there was a connection error
+    If IsWindow("Oracle_Forms_Error_JavaWindow", "Exists") = True Then
+        WriteLogSteps 1, Space(3) & "It appears that this instance lost connection to the server. Trying to close the window..."
+        JavaWindow("Java_Warning_Security_JavaWindow").Attach
+            JavaButton("Caption=OK").Click
+            
+        WaitForWindow "Java_Warning_Security_JavaWindow", DoesNotExist
+    End If
+    
+    If IsWindow("Java_Warning_Security_JavaWindow", "Exists") = True Then
+        JavaWindow("Java_Warning_Security_JavaWindow").Attach
+            JavaCheckBox("Caption='Always trust content from this publisher.'").SetCheck True
+            JavaButton("Caption=Run").Click
+            
+        ' Since this is done the first time this URL is accessed, let it go through the loading process first
+        WaitTime = 30   'set the WaitTime to a reasonable time to load
+        WaitForWindow "Oracle_Developer_Forms_Runtime_WebWindow", DoesExist
+        WaitForWindow "Oracle_Developer_Forms_Runtime_WebWindow", DoesNotExist
+        '   Now that the runtime is loaded, check to make sure the login window loads.
+        WaitForText "Oracle_11_Main_JavaWindow", "Connect", True
+        ' Now set the WaitTime back to 5
+        WaitTime = 5
+    End If
+    
+    If IsObj("Caption=Responsibilities", Does_Exist) = True Then
+        ShowStatusBox "Closing the Responsibilities window", True
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+        JavaWindow("Caption=Responsibilities", tpAttachChild).Attach
+            JavaWindow.Type "c"
+            
+        WaitForWindow "Caption=Responsibilities", DoesNotExist
+    End If
+    
+    If IsWindow("Oracle_11_Main_JavaWindow", "Exists") = True Then
+        ShowStatusBox "Closing Oracle window by pressing F4", True
+        JavaWindow("Oracle_11_Main_JavaWindow").Attach
+            JavaWindow.Type "{Alt F}"
+            Sleep 500, tpPauseMilliSeconds
+            JavaWindow.Type "x"
+            
+        WaitForWindow "Caption=Caution", DoesExist
+        
+        ShowStatusBox "Clicking the 'OK' button", True
+        JavaWindow("Caption=Caution", tpAttachChild).Attach
+            JavaWindow.Type "o"
+            'JavaButton("Caption=OK").Click
+
+        SleepFor 2, "to let Oracle Forms close"
+        ' This is not used because the JavaWindow also exists below the text in the Oracle web page...
+        'WaitForWindow "Oracle_11_Main_JavaWindow", DoesNotExist
+        
+        CloseIE
+        
+        KillApp "Java.exe"
+        
+        RemoveGhostIcons
+    End If
+    WaitTime = iTempWaitTime   ' Set it back to what it was
+
+End Sub 'Oracle_Close
+    
+Sub OracleWeb_Close()
+
+    On Error Resume Next        ' We don't want to trigger any errors here since we could be in a error condition already
+    
+    Dim iTempWaitTime As Integer
+    
+    ' No need to go in here if IE isn't running
+    If IsRunning("Iexplore.exe") = False Then Exit Sub
+    
+    ' Since IE is running, log out and close it
+    iTempWaitTime = WaitTime    ' Get the default Wait Time
+    WaitTime = 10               ' Now set the wait time to only 10 seconds instead of 30
+    
+    ' since as of now, Oracle 12 ia just a Web App, we can take advantage of the built-in logout functionality
+    LogOutAndCloseIE
+    
+    WaitTime = iTempWaitTime   ' Set it back to what it was
+    
+End Sub
+Sub Security_check()
+                '======ch
+                ' 20131014
+                ' Should resole Java conflict from stopping scripts.
+                Sleep 5000, tpPauseMilliSeconds
+                If IsWindow("Application=JAVA.EXE Caption='Warning - Unavailable Version of Java Requested'", "Exists") = True Then
+                    WriteLogSteps 1, Space(3) & "It appears that Java version conflict..."
+                JavaWindow("Application=JAVA.EXE Caption='Warning - Unavailable Version of Java Requested'").Attach
+                    JavaButton("Caption='Run with the latest version'").Click
+                  WaitForWindow "Application=JAVA.EXE Caption='Warning - Unavailable Version of Java Requested'", DoesNotExist
+                End If
+Loop_sec:
+                    Sleep 2000, tpPauseMilliSeconds
+                    If IsWindow("Application=JAVA.EXE Caption='Security Warning'", "Exists") = True Then
+                        WriteLogSteps 1, Space(3) & "It appears that Java version conflict..."
+                    JavaWindow("Application=JAVA.EXE Caption='Security Warning'").Attach
+                        If IsObj("Caption='I accept the risk and want to run this application.'", Does_Exist) = True Then
+                          JavaCheckBox("Caption='I accept the risk and want to run this application.'").SetCheck True
+                          If IsObj("Caption='Show Options'", Does_Exist) = True Then
+                            JavaButton("Caption='Show Options'").Click
+                            JavaCheckBox("Caption='Do not show this again for apps from the publisher and location above'").SetCheck True
+                          End If
+                        Else
+                          JavaCheckBox("Caption='I accept the risk and want to run this app.'").SetCheck True
+                          JavaCheckBox("Caption='Do not show this again for this app'").SetCheck True
+                        End If
+                    JavaButton("Caption=Run").Click
+                GoTo Loop_sec
+                  'WaitForWindow "Application=JAVA.EXE Caption='Security Warning'", DoesNotExist
+                End If
+                
+                '======ch
+End Sub
+
+   Sub Login()
+    
+   ' If sRobotName = Agent_Arg Then
+    'HTMLEditBox("Name=username").SetText UserName_Arg
+   ' HTMLEditBox("Name=password").SetPasswordText "kOD7rbgna1EkAA=="  'cwareits2
+   ' HTMLImage("Caption=Login").Click
+   ' End If
+    
+   End Sub
+Sub Responsibility()
+
+    If sRobotName = Agent_Brzl Or sRobotName = Agent_StLouis Or sRobotName = Agent_Nang Or sRobotName = Agent_Dev Or sRobotName = Agent_Austin Or sRobotName = Agent_Boulder3 Or sRobotName = Agent_Chan2 Or sRobotName = Agent_Dev Or sRobotName = Agent_Mnl Then
+     
+    IEWindow("Internet Explorer MainWindow").Attach
+    IEWindow("Internet Explorer MainWindow").TextSelect "EMR ONT Order Administrator SUB MY"
+    WaitForText "Internet Explorer MainWindow", "Change Organization"
+    
+    If InstanceName = "R12_JDI_GSOF" Then
+    
+    IEWindow("Internet Explorer MainWindow").Attach
+    HTMLBrowser("Internet Explorer ChildWindow").Attach
+    HTMLDiv("ID=menuLayout_div").Scroll 427, tpScrollVertical, 1344
+   End If
+   
+    Sleep 3
+    ShowStatusBox "Clicking on Customer Order Returns", True
+   ' HTMLAnchor("Caption='    Global Sales Forms'").Click
+    IEWindow("Internet Explorer MainWindow").Attach
+    HTMLBrowser("Internet Explorer ChildWindow").Attach
+    HTMLAnchor("Caption='    EMR Global Sales Order Entry Form'").Click
+         
+    End If
+    
+    
+    If sRobotName = Agent_Arg Then
+     HTMLAnchor("Caption='" & Responsibility_Arg & "'").Click
+     HTMLAnchor("Caption='" & OracleForm & "'").Click
+    End If
+    
+    If sRobotName = Agent_Hun Then
+     HTMLAnchor("Caption='" & Responsibility_Hun & "'").Click
+     HTMLAnchor("Caption='" & OracleForm & "'").Click
+    End If
+ 
+    If sRobotName = Agent_Mex Then
+     HTMLAnchor("Caption='" & Responsibility_Mex & "'").Click
+     HTMLAnchor("Caption='" & OracleForm & "'").Click
+    End If
+    
+    If sRobotName = Agent_Mal Then
+     HTMLAnchor("Caption='" & Responsibility_Mal & "'").Click
+     HTMLAnchor("Caption='" & OracleForm & "'").Click
+    End If
+    
+
+    
+    If sRobotName = Agent_Aus Then
+     HTMLAnchor("Caption='" & Responsibility_Aus & "'").Click
+     HTMLAnchor("Caption='" & OracleForm & "'").Click
+    End If
+End Sub
+Sub EnterOrderNum()
+    
+       If sRobotName = Agent_Brzl Or sRobotName = Agent_Dev2 Or sRobotName = Agent_Bou3 Or sRobotName = Agent_StLouis Or sRobotName = Agent_Nang Or sRobotName = Agent_Dev Or sRobotName = Agent_Mal Or sRobotName = Agent_Boulder3 Or sRobotName = Agent_Chan2 Or sRobotName = Agent_Mnl Or sRobotName = Agent_Sing Then
+        JavaEditBox("Name=ORDER_ORDER_NUMBER_0").Click
+        JavaEditBox("Name=ORDER_ORDER_NUMBER_0").SetText OrderNum_Mal
+     End If
+     
+End Sub
+Sub ChangeShipAddress()
+    
+    If sRobotName = Agent_Brzl Or sRobotName = Agent_StLouis Or sRobotName = Agent_Dev Or sRobotName = Agent_Dev2 Or sRobotName = Agent_Bou3 Or sRobotName = Agent_Boulder3 Or sRobotName = Agent_Austin Or sRobotName = Agent_Dev Or sRobotName = Agent_Chan2 Or sRobotName = Agent_Mnl Or sRobotName = Agent_Sing Then
+          
+        JavaEditBox("Name=ORDER_SHIP_TO_LOCATION_0").Click
+        WaitForNoHourGlass
+        JavaEditBox("Name=ORDER_SHIP_TO_LOCATION_0").SetText NewShipAddress_Brzl
+        JavaEditBox("Index=41").Click
+        WaitForNoHourGlass
+              
+    End If
+    
+        If sRobotName = Agent_Arg Then
+            JavaEditBox("Name=ORDER_SHIP_TO_LOCATION_0").SetText NewShipAddress_Arg         'SetText "60844370"
+            JavaEditBox("Name=ORDER_INVOICE_TO_LOCATION_0").Click
+    End If
+   
+    
+    If sRobotName = Agent_Hun Then
+            JavaEditBox("Name=ORDER_SHIP_TO_LOCATION_0").SetText NewShipAddress_Hun         'SetText "60844370"
+            JavaEditBox("Name=ORDER_INVOICE_TO_LOCATION_0").Click
+    End If
+    
+         If sRobotName = Agent_Mex Then
+            JavaEditBox("Name=ORDER_SHIP_TO_LOCATION_0").SetText NewShipAddress_Mex         'SetText "60844370"
+            JavaEditBox("Name=ORDER_INVOICE_TO_LOCATION_0").Click
+    End If
+    
+         If sRobotName = Agent_Mal Then
+            JavaEditBox("Name=ORDER_SHIP_TO_LOCATION_0").SetText NewShipAddress_Mal         'SetText "60844370"
+            JavaEditBox("Name=ORDER_INVOICE_TO_LOCATION_0").Click
+    End If
+    
+         If sRobotName = Agent_Aus Then
+            JavaEditBox("Name=ORDER_SHIP_TO_LOCATION_0").SetText NewShipAddress_Aus         'SetText "60844370"
+            JavaEditBox("Name=ORDER_INVOICE_TO_LOCATION_0").Click
+        Else
+            JavaEditBox("Name=ORDER_SHIP_TO_LOCATION_0").SetText NewShipAddress_Mal         'SetText "60844370"
+            JavaEditBox("Name=ORDER_INVOICE_TO_LOCATION_0").Click
+    End If
+End Sub
+Sub InitializeApps()
+
+    Call Oracle_Close
+    Call OracleWeb_Close
+    'MsgBox (InstanceName)
+     'InstanceName = "OE_RMT_Small"
+
+    AddToKillList "Java.exe"        ' Make sure this is terminated at the end of every script.
+    AddToKillList "iexplore.exe"    ' While normally discouraged, occasionally this hangs when closing normally
+    AddToKillList "jp2launcher.exe"
+    ' Since this is a Java app, make sure to set the Java settings
+   Call DisableJavaCups
+
+End Sub
+Sub Configure_A4700()
+      
+      JavaButton("Caption=Configurator").Click
+      
+           
+      WaitForNoHourGlass
+      WaitForWindow "A4700Window"
+      IEWindow("A4700Window").Maximize
+      WaitForWindow "A4700Window" ' wait for the IEConfigWindow to be enabled after it has been maximized
+      WaitForNoHourGlass
+      WaitForText "A4700Window", "Configurator", True
+      WaitForNoHourGlass
+      IEWindow("A4700Window").Attach
+    
+        
+    IEWindow("Internet Explorer MainWindow").Attach
+    HTMLBrowser("Internet Explorer ChildWindow").Attach
+        HTMLComboBox("Name=czUiNode_14").Click
+        HTMLComboBox("Name=czUiNode_14").Select "Standalone"
+        HTMLTD("ID=czUiNode_12").Click
+         WaitForNoHourGlass
+        HTMLComboBox("Name=czUiNode_26").Click
+        HTMLComboBox("Name=czUiNode_26").Select "ENGLISH"
+        HTMLTD("ID=czUiNode_24").Click
+         WaitForNoHourGlass
+        HTMLComboBox("Name=czUiNode_39").Click
+        HTMLComboBox("Name=czUiNode_39").Select "Guided Selling"
+        HTMLTD("ID=czUiNode_37").Click
+        WaitForNoHourGlass
+        WaitForText "A4700Window", "Guided Selling", True
+        
+        
+        IEWindow("Internet Explorer MainWindow").Attach
+        HTMLBrowser("Internet Explorer ChildWindow").Attach
+        HTMLBrowser.Scroll 460, tpScrollVertical, 1243
+
+        HTMLButton("Caption='Launch - Guided Selling'").Click
+        HTMLComboBox("Name=czUiNode_44").Click
+        HTMLComboBox("Name=czUiNode_44").Select "Single User License"
+        DoEvents
+        Sleep 1
+        HTMLTD("ID=czUiNode_42").Click
+
+    
+        HTMLButton("Caption='Finish'").Click
+
+        
+      JavaWindow("Oracle_11_Main_JavaWindow").Attach
+      WaitForNoHourGlass
+      WaitForWindow "Caption='Note'", DoesNotExist
+      WaitForNoHourGlass
+'Validate cfg status
+    WaitForText "Oracle_11_Main_JavaWindow", "VAL", True
+      WaitForNoHourGlass
+               
+          
+End Sub
+Sub Configure_A2140(InstanceName As String)
+      
+      
+      JavaButton("Caption=Configurator").Click
+      
+      WaitForNoHourGlass
+      WaitForWindow "A2140Window"
+      IEWindow("A2140Window").Maximize
+      WaitForWindow "A2140Window" ' wait for the IEConfigWindow to be enabled after it has been maximized
+      WaitForNoHourGlass
+      WaitForText "A2140Window", "Configurator", True
+      WaitForNoHourGlass
+      IEWindow("A2140Window").Attach
+
+    HTMLBrowser("Internet Explorer ChildWindow").Attach
+   
+   'If InstanceName = "JDI_GSOF_Prod" Then
+       'HTMLImage("Name=czUiNode_28_1__3506619").Click
+       'HTMLTD("ID=czUiNode_117").Click
+       HTMLComboBox("Name=czUiNode_13").Click
+       HTMLComboBox("Name=czUiNode_13").Select "(Latin America) Latin America"
+       HTMLTD("ID=czUiNode_11").Click
+       WaitForNoHourGlass
+       'DoEvents
+'Else
+       'HTMLImage("Name=czUiNode_28_3__3506617").Click
+       'HTMLTD("ID=czUiNode_117").Click
+       
+'End If
+Sleep 1
+
+'If InstanceName = "JDI_GSOF_Prod" Then
+        HTMLComboBox("Name=czUiNode_26").Click
+        HTMLComboBox("Name=czUiNode_26").Select "+Brazil"
+        HTMLTD("ID=czUiNode_24").Click
+        WaitForNoHourGlass
+        'DoEvents
+'Else
+        'HTMLComboBox("Name=czUiNode_72").Click
+       ' HTMLComboBox("Name=czUiNode_72").Select "+Malaysia"
+'End If
+    
+   Sleep 1
+        HTMLComboBox("Name=czUiNode_97").Click
+        HTMLComboBox("Name=czUiNode_97").Select "Model String Entry"
+        HTMLTD("ID=czUiNode_95").Click
+        WaitForNoHourGlass
+        'DoEvents
+          'HTMLTD("ID=czUiNode_117").Click
+        'WaitForObject "A2140_Model_EditBox", IsEnabled
+        Sleep 3
+        'HTMLEditBox("A2140_Model_EditBox").Click
+        'HTMLEditBox("A2140_Model_EditBox").SetText ModelString2
+        'ClipBoard = ModelString2
+        'HTMLEditBox("A2140_Model_EditBox").Click
+        'HTMLEditBox("A2140_Model_EditBox").Type KeyPaste
+        HTMLEditBox("Name=czUiNode_166").Click
+        HTMLEditBox("Name=czUiNode_166").SetText ModelString2
+        HTMLTD("ID=czUiNode_164").Click
+         
+        WaitForText "A2140Window", "Single Channel", True
+        WaitForNoHourGlass
+        Sleep 1
+        HTMLButton("Caption='Finish'").Click
+        
+     JavaWindow("Oracle_11_Main_JavaWindow").Attach
+      WaitForNoHourGlass
+      WaitForWindow "Caption='Note'", DoesNotExist
+      WaitForNoHourGlass
+'Validate cfg status
+      WaitForText "Oracle_11_Main_JavaWindow", "VAL", True
+      WaitForNoHourGlass
+          
+End Sub
+Sub Configure_DPSX()
+      
+        JavaButton("Caption=Configurator").Click
+ 
+      WaitForNoHourGlass
+      WaitForWindow "DPSXWindow"
+      IEWindow("DPSXWindow").Maximize
+      WaitForWindow "DPSXWindow" ' wait for the IEConfigWindow to be enabled after it has been maximized
+      WaitForNoHourGlass
+      WaitForText "DPSXWindow", "Configurator", True
+      WaitForNoHourGlass
+      IEWindow("DPSXWindow").Attach
+      
+      HTMLEditBox("Name=czUiNode_109").Click
+      HTMLEditBox("Name=czUiNode_109").SetText ModelString3 '"SX0205S03TTT6STDM018ANN: DA0S0NNN"
+      WaitForNoHourGlass
+      IEWindow("Internet Explorer MainWindow").Attach
+      HTMLBrowser("Internet Explorer ChildWindow").Attach
+         HTMLButton("CMF100M").Click
+        WaitForNoHourGlass
+        WaitForText "DPSXWindow", "ANSI"
+        HTMLButton("DPPLATEFinishR12").Click
+        WaitForNoHourGlass
+      '----
+      
+   ' IEWindow("Internet Explorer MainWindow").Attach
+
+   ' HTMLFrame("Src='/OA_HTML/OA.jsp_redirect=/OA_HTML/OA.jsp&region=/oracle/apps/fnd/framework/webui/OADialogPopupRN&bypassPageCounterIncr=Y&isPopupRegion=Y&retainAM=Y&&sessionid=NXtAjTlvLGJ0NKAWrGgm3NhXgK&transactionid=2129897196&oapc=14&oas=1ca4GA08i9vlbRCrf7Uwnw..'").Attach
+   '     HTMLButton("Caption=Yes").Click
+
+    
+
+      '----
+     JavaWindow("Oracle_11_Main_JavaWindow").Attach
+      WaitForNoHourGlass
+      WaitForWindow "Caption='Note'", DoesNotExist
+      WaitForNoHourGlass
+'Validate cfg status
+      WaitForText "Oracle_11_Main_JavaWindow", "VAL", True
+      WaitForNoHourGlass
+End Sub
+     
+Sub Configure_DPPLATE()
+      
+      JavaButton("Caption=Configurator").Click
+        
+     WaitTime = 400
+      WaitForNoHourGlass
+      WaitForWindow "DPPLATEWindow"
+      IEWindow("DPPLATEWindow").Maximize
+      WaitForWindow "DPPLATEWindow" ' wait for the IEConfigWindow to be enabled after it has been maximized
+      WaitForNoHourGlass
+      WaitForText "DPPLATEWindow", "Configurator", True
+      WaitForNoHourGlass
+      IEWindow("DPPLATEWindow").Attach
+                      
+        '--------------------------- Wait for Object Code ---------------'
+        
+        
+        
+    IEWindow("Internet Explorer MainWindow").Attach
+
+   
+         HTMLEditBox("Name=czUiNode_68").Click
+        HTMLEditBox("Name=czUiNode_68").SetText ModelString4
+        
+        IEWindow("Internet Explorer MainWindow").Attach
+
+        HTMLTD("ID=czUiNode_63").Click
+        
+        
+    IEWindow("Internet Explorer MainWindow").Attach
+
+    HTMLBrowser("Internet Explorer ChildWindow").Attach
+    
+    HTMLButton("CMF100M").Click
+         
+         WaitForNoHourGlass
+    
+     WaitForNoHourGlass
+         WaitForObject "DPPLATEFinishR12", IsEnabled
+
+         WaitForNoHourGlass
+         IEWindow("Internet Explorer MainWindow").Attach
+         HTMLButton("DPPLATEFinishR12").Click
+         WaitForNoHourGlass
+         'WaitForText "Internet Explorer MainWindow", "Warning", True
+         'HTMLButton("Caption=Yes").Click
+         
+         'IEWindow("Internet Explorer MainWindow").Attach
+         'HTMLButton("Caption=Yes").Click
+       '--------------------------- Wait for Object Code ---------------'
+  
+       
+     JavaWindow("Oracle_11_Main_JavaWindow").Attach
+      WaitForNoHourGlass
+      WaitForWindow "Caption='Note'", DoesNotExist
+      WaitForNoHourGlass
+'Validate cfg status
+      WaitForText "Oracle_11_Main_JavaWindow", "VAL", True
+      WaitForNoHourGlass
+          
+End Sub
+Sub Configure_107()
+      
+      JavaButton("Caption=Configurator").Click
+      
+     IEWindow("Internet Explorer MainWindow").Attach
+
+      WaitTime = 400
+      WaitForNoHourGlass
+      WaitForWindow "107Window"
+      IEWindow("107Window").Maximize
+      WaitForWindow "107Window" ' wait for the IEConfigWindow to be enabled after it has been maximized
+      WaitForNoHourGlass
+      WaitForText "107Window", "Configurator", True
+      WaitForNoHourGlass
+      IEWindow("107Window").Attach
+    
+ HTMLBrowser("Internet Explorer ChildWindow").Attach
+         WaitForNoHourGlass
+        HTMLEditBox("Name=czUiNode_64").Click
+         WaitForNoHourGlass
+        HTMLEditBox("Name=czUiNode_64").SetText ModelString5 '"107/107A1/107B2/None/None/None/None/None/None/None/None/None/None"
+        IEWaitForText "107/107A1/107B2/None/None/None/None/None/None/None/None/None/None", True
+         WaitForNoHourGlass
+         HTMLBrowser("Internet Explorer ChildWindow").Attach
+        HTMLButton("Caption='Apply Selection'").Click
+        HTMLButton("Caption='Apply Selection'").Click
+        Sleep 3
+         WaitForNoHourGlass
+          WaitForText "107Window", "107A1", True
+         
+        HTMLButton("DPPLATEFinishR12").Click
+       WaitForNoHourGlass
+        
+             
+      JavaWindow("Oracle_11_Main_JavaWindow").Attach
+      WaitForNoHourGlass
+      WaitForWindow "Caption='Note'", DoesNotExist
+      WaitForNoHourGlass
+'Validate cfg status
+      WaitForText "Oracle_11_Main_JavaWindow", "VAL", True
+      WaitForNoHourGlass
+          
+End Sub
+
+Sub Configure_CMF100M()
+      
+      JavaButton("Caption=Configurator").Click
+      
+       WaitTime = 400
+      WaitForNoHourGlass
+      WaitForWindow "CMF100MWindow"
+      IEWindow("CMF100MWindow").Maximize
+      WaitForWindow "CMF100MWindow" ' wait for the IEConfigWindow to be enabled after it has been maximized
+     ' WaitForNoHourGlass
+      WaitForText "CMF100MWindow", "Configurator", True
+      WaitForNoHourGlass
+      IEWindow("CMF100MWindow").Attach
+      
+      
+        HTMLEditBox("Name=czUiNode_80").Click
+        HTMLEditBox("Name=czUiNode_80").SetText ModelString6
+        WaitForNoHourGlass
+        HTMLTD("ID=czUiNode_43").Click
+        WaitForNoHourGlass
+        HTMLButton("CMF100M").Click
+        WaitForNoHourGlass
+        WaitForText "CMF100MWindow", "N, Standard pressure containment", True
+        HTMLButton("Caption=Finish").Click
+        WaitForNoHourGlass
+      
+
+   JavaWindow("Oracle_11_Main_JavaWindow").Attach
+      WaitForNoHourGlass
+      WaitForWindow "Caption='Note'", DoesNotExist
+      WaitForNoHourGlass
+'Validate cfg status
+      WaitForText "Oracle_11_Main_JavaWindow", "VAL", True
+      WaitForNoHourGlass
+          
+End Sub
+
+Sub Configure_CWM()
+      
+      JavaButton("Caption=Configurator").Click
+      
+     WaitTime = 400
+      WaitForNoHourGlass
+      WaitForWindow "CWMWindow"
+      IEWindow("CWMWindow").Maximize
+      WaitForWindow "CWMWindow" ' wait for the IEConfigWindow to be enabled after it has been maximized
+      WaitForNoHourGlass
+      WaitForText "CWMWindow", "Configurator", True
+      WaitForNoHourGlass
+      IEWindow("CWMWindow").Attach
+       Sleep 2
+    WaitForNoHourGlass
+     IEWindow("CWMWindow").Attach
+     
+     
+    IEWindow("Internet Explorer MainWindow").Attach
+
+    HTMLBrowser("Internet Explorer ChildWindow").Attach
+    HTMLBrowser.Scroll 0, tpScrollVertical, 1426
+
+    HTMLEditBox("Name=czUiNode_64").Click
+    HTMLEditBox("Name=czUiNode_64").SetText ModelString7
+        WaitForNoHourGlass
+   
+        HTMLTD("ID=czUiNode_62").Click
+        HTMLButton("Caption='Apply Selection'").Click
+        WaitForNoHourGlass
+        WaitForText "CWMWindow", "STATION MANAGER", True
+        HTMLButton("Caption=Finish").Click
+        WaitForNoHourGlass
+
+ 
+
+  JavaWindow("Oracle_11_Main_JavaWindow").Attach
+      WaitForNoHourGlass
+      WaitForWindow "Caption='Note'", DoesNotExist
+      WaitForNoHourGlass
+'Validate cfg status
+      WaitForText "Oracle_11_Main_JavaWindow", "VAL", True
+      WaitForNoHourGlass
+          
+End Sub
+
+
+Sub Configure_CBBMaster()
+      
+      JavaButton("Caption=Configurator").Click
+      
+     WaitTime = 400
+      WaitForNoHourGlass
+      WaitForWindow "CBBMaster"
+      IEWindow("CBBMaster").Maximize
+      WaitForWindow "CBBMaster" ' wait for the IEConfigWindow to be enabled after it has been maximized
+      WaitForNoHourGlass
+      WaitForText "CBBMaster", "Configurator", True
+      WaitForNoHourGlass
+      IEWindow("CBBMaster").Attach
+      
+      
+        HTMLEditBox("Name=czUiNode_72").Click
+        HTMLEditBox("Name=czUiNode_72").SetText ModelString8
+        WaitForNoHourGlass
+        HTMLTD("ID='' Index=31").Click
+        HTMLButton("Caption=Go").Click
+        WaitForNoHourGlass
+        HTMLTD("ID='' Index=31").Click
+        HTMLButton("Caption=Next").Click
+        WaitForNoHourGlass
+        If InstanceName = "JDI_GSOF_Prod" Then
+        HTMLComboBox("Name=czUiNode_317").Click 114, 8
+        HTMLComboBox("Name=czUiNode_317").Select "Standard Paint-CB"
+        DoEvents
+        WaitForNoHourGlass
+        Sleep 1
+        End If
+        
+        WaitForText "Internet Explorer MainWindow", "Model String", True
+        HTMLButton("Caption=Finish").Click
+        WaitForNoHourGlass
+    
+
+  JavaWindow("Oracle_11_Main_JavaWindow").Attach
+      WaitForNoHourGlass
+      WaitForWindow "Caption='Note'", DoesNotExist
+      WaitForNoHourGlass
+'Validate cfg status
+      WaitForText "Oracle_11_Main_JavaWindow", "VAL", True
+      WaitForNoHourGlass
+          
+End Sub
+
+
+Sub Configure_GMaster()
+      
+      JavaButton("Caption=Configurator").Click
+      
+     WaitTime = 400
+      WaitForNoHourGlass
+      WaitForWindow "GMASTERWindow"
+      IEWindow("GMASTERWindow").Maximize
+      WaitForWindow "GMASTERWindow" ' wait for the IEConfigWindow to be enabled after it has been maximized
+      WaitForNoHourGlass
+      WaitForText "GMASTERWindow", "Configurator", True
+      WaitForNoHourGlass
+      IEWindow("GMASTERWindow").Attach
+      
+      
+      
+        HTMLEditBox("Name=czUiNode_42").Click
+        HTMLEditBox("Name=czUiNode_42").SetText "G01008-SR0(CW)"
+        WaitForNoHourGlass
+         HTMLTD("ID=czUiNode_51").Click
+          WaitForNoHourGlass
+        HTMLButton("Caption=Go").Click
+        WaitForNoHourGlass
+        HTMLButton("Caption=Next").Click
+        WaitForNoHourGlass
+        WaitForText "Internet Explorer MainWindow", "Model String", True
+        HTMLButton("Caption=Finish").Click
+        WaitForNoHourGlass
+    
+
+  JavaWindow("Oracle_11_Main_JavaWindow").Attach
+      WaitForNoHourGlass
+      WaitForWindow "Caption='Note'", DoesNotExist
+      WaitForNoHourGlass
+'Validate cfg status
+      WaitForText "Oracle_11_Main_JavaWindow", "VAL", True
+      WaitForNoHourGlass
+          
+End Sub
+
+
+
+
